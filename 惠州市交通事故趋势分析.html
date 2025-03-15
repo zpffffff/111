@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>惠州市交通事故趋势分析</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        #main {
+            width: 80%;
+            height: 500px;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>惠州市交通事故趋势分析</h2>
+    <div id="main"></div>
+
+    <script>
+        // 初始化 ECharts 实例
+        var myChart = echarts.init(document.getElementById('main'));
+
+        // 交通事故数据示例（需要替换为你的数据）
+        var years = ['2018', '2019', '2020', '2021', '2022', '2023']; // 年份
+        var accidentCounts = [450, 520, 610, 700, 680, 730]; // 每年的事故数量
+
+        // 配置图表
+        var option = {
+            title: {
+                text: '惠州市历年交通事故趋势'
+            },
+            tooltip: {
+                trigger: 'axis'
+            },
+            xAxis: {
+                type: 'category',
+                data: years
+            },
+            yAxis: {
+                type: 'value',
+                name: '事故数量'
+            },
+            series: [{
+                name: '事故数量',
+                type: 'line',
+                data: accidentCounts
+            }]
+        };
+
+        // 渲染图表
+        myChart.setOption(option);
+    </script>
+
+</body>
+</html>

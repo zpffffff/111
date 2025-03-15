@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>各区县交通事故死亡人数占比</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <style>
+        #pie-chart {
+            width: 100%;
+            height: 600px;
+        }
+        .nav-link {
+            text-align: center;
+            margin: 20px;
+        }
+        a {
+            color: #4ECDC4;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        .year-selector {
+            text-align: center;
+            margin: 20px 0;
+        }
+        select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #4ECDC4;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <h2>惠州市各区县交通事故死亡人数占比</h2>
+    <div class="nav-link">
+        <a href="huizhou_forecast.html">👉 查看未来预测</a>
+        <a href="main_chart.html">👈 查看趋势分析</a>
+        <a href="huizhou_economic_forecast.html">👉 查看经济损失预测</a>
+    </div>
+    <div class="year-selector">
+        <select id="yearSelect">
+            <!-- 年份选项由JavaScript动态生成 -->
+        </select>
+    </div>
+    <div id="pie-chart"></div>
+
+    <script>
+        // 1. 加载数据并初始化
+        fetch('data/huizhou_traffic_2016.json')
+            .then(response => response.json())
+            .then(data => {
+                // 2. 动态生成年份选择器
+                const years = [...new Set(data.map(d => d.年份))].sort();
+                const yearSelect = document.getElementById('yearSelect');
+                years.forEach(year => {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = `${year}年`;
+                    yearSelect.appendChild(option);
+                });
+
+                // 3. 初始化默认显示最新年份
+                let selectedYear = years[years.length - 1];
+                updatePieChart(selectedYear);
+
+                // 4. 监听年份选择变化
+                yearSelect.addEventListener('change', (e) => {
+                    selectedYear = parseInt(e.target.value);
+                    updatePieChart(selectedYear);
+                });
+
+                // 5. 更新饼图函数
+                function updatePieChart(year) {
+                    const yearData = data.find(d => d.年份 === year);
+                    const pieData = [
+                        { name: '惠城区', value: yearData.惠城区死亡人数_占比 || 0 },
+                        { name: '惠阳区', value: yearData.惠阳区死亡人数_占比 || 0 },
+                        { name: '龙门县', value: yearData.龙门县死亡人数_占比 || 0 },
+                        { name: '惠东县', value: yearData.惠东县死亡人数_占比 || 0 },
+                        { name: '博罗县', value: yearData.博罗县死亡人数_占比 || 0 },
+                        { name: '大亚湾区', value: yearData.大亚湾区死亡人数_占比 || 0 },
+                        { name: '仲恺高新区', value: yearData.仲恺高新区死亡人数_占比 || 0 }
+                    ];
+
+                    // 6. 配置饼图
+                    const pieChart = echarts.init(document.getElementById('pie-chart'));
+                    const pieOption = {
+                        title: {
+                            text: `${year}年各区县死亡人数占比`,
+                            left: 'center',
+                            textStyle: { fontSize: 18 }
+                        },
+                        tooltip: {
+                            trigger: 'item',
+                            formatter: '{b}: {d}%'  // 显示百分比
+                        },
+                        legend: {
+                            orient: 'vertical',
+                            left: 'left',
+                            data: pieData.map(d => d.name),
+                            textStyle: { fontSize: 14 }
+                        },
+                        series: [{
+                            type: 'pie',
+                            radius: '60%',
+                            data: pieData,
+                            label: {
+                                show: true,
+                                formatter: '{b}: {d}%',
+                                fontSize: 12
+                            },
+                            itemStyle: {
+                                // 颜色与主图表一致
+                                color: (params) => ({
+                                    '惠城区': '#6C5B7B',
+                                    '惠阳区': '#355C7D',
+                                    '龙门县': '#C06C84',
+                                    '惠东县': '#F8B195',
+                                    '博罗县': '#99B898',
+                                    '大亚湾区': '#2A363B',
+                                    '仲恺高新区': '#E84A5F'
+                                }[params.name])
+                            }
+                        }]
+                    };
+                    pieChart.setOption(pieOption);
+                    window.addEventListener('resize', () => pieChart.resize());
+                }
+            })
+            .catch(error => {
+                console.error('加载数据失败:', error);
+            });
+    </script>
+</body>
+</html>

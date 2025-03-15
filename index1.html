@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>惠州市交通事故经济损失可视化</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        #chart {
+            width: 80%;
+            height: 500px;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+    <h2>惠州市交通事故经济损失趋势</h2>
+    <div id="chart"></div>
+
+    <script>
+        // 读取 JSON 数据
+        fetch("arima_result.json")
+            .then(response => response.json())
+            .then(data => {
+                var years = data.map(d => d["年份"]); // 提取年份
+                var real_data = data.map(d => d["全市损失折款（万元）"]); // 实际数据
+                var predicted_data = data.map(d => d["预测值"]); // 预测数据
+
+                // 初始化 ECharts
+                var myChart = echarts.init(document.getElementById('chart'));
+
+                var option = {
+                    title: {
+                        text: '惠州市交通事故经济损失趋势'
+                    },
+                    tooltip: {
+                        trigger: 'axis'
+                    },
+                    legend: {
+                        data: ['实际损失', '预测损失']
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: years
+                    },
+                    yAxis: {
+                        type: 'value',
+                        name: '损失金额（万元）'
+                    },
+                    series: [
+                        {
+                            name: '实际损失',
+                            type: 'line',
+                            data: real_data,
+                            color: 'red'
+                        },
+                        {
+                            name: '预测损失',
+                            type: 'line',
+                            data: predicted_data,
+                            color: 'blue',
+                            lineStyle: {
+                                type: 'dashed'
+                            }
+                        }
+                    ]
+                };
+
+                myChart.setOption(option);
+            })
+            .catch(error => console.error("读取 JSON 失败:", error));
+    </script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交通事故死亡人数预测</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <style>
+        #forecast-chart {
+            width: 100%;
+            height: 600px;
+        }
+        .nav-link {
+            text-align: center;
+            margin: 20px;
+        }
+        a {
+            color: #4ECDC4;
+            text-decoration: none;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h2>惠州市交通事故死亡人数预测（2025-2030）</h2>
+    <div class="nav-link">
+        <a href="main_chart.html">👈 返回趋势分析</a>
+        <a href="pie_chart.html">👈 查看占比分析</a>
+        <a href="huizhou_economic_forecast.html">👉 查看经济损失预测</a>
+    </div>
+    <div id="forecast-chart"></div>
+
+    <script>
+// 同时加载历史数据和预测数据
+Promise.all([
+    fetch('data/huizhou_traffic_2016.json').then(res => res.json()),
+    fetch('data/huizhou_forecast.json').then(res => res.json())
+]).then(([historyData, forecastData]) => {
+    // 🚀 确保预测数据不包含 2024，以免重复
+    forecastData = forecastData.filter(d => d.年份 >= 2025);
+
+    // 合并数据
+    let allData = [...historyData, ...forecastData];
+
+    // 🚀 按年份排序（确保数据是 2016-2030 顺序）
+    allData.sort((a, b) => a.年份 - b.年份);
+
+    // 提取数据
+    const allYears = allData.map(d => d.年份);
+    const allDeaths = allData.map(d => d.全市死亡人数 ?? d.预测死亡人数 ?? null);
+    const allLowerBounds = allData.map(d => d.预测下限 ?? null);
+    const allUpperBounds = allData.map(d => d.预测上限 ?? null);
+
+    // 历史数据长度
+    const historyLength = historyData.length;
+    const lastHistoryDeath = allDeaths[historyLength - 1];  // 2024年的死亡人数
+    const allDeathsFixed = [
+        ...allDeaths.slice(0, historyLength),  // 历史数据
+        lastHistoryDeath,  //  让2024年和2025年连接
+        ...allDeaths.slice(historyLength)  // 预测数据
+    ];
+    // 初始化 ECharts
+    const chart = echarts.init(document.getElementById('forecast-chart'));
+    const option = {
+        tooltip: { trigger: 'axis' },
+        legend: { 
+            data: ['历史数据', '预测数据'],
+            selected: {
+                '预测数据': false  // 初始时隐藏预测数据
+            }
+        },
+        xAxis: {
+            type: 'category',
+            data: allYears,
+            axisLabel: { rotate: 45 }
+        },
+        yAxis: { type: 'value', name: '死亡人数' },
+        series: [
+            {
+                name: '历史数据',
+                type: 'line',
+                data: allDeaths.slice(0, historyLength), // 🚀 确保历史数据是 2016-2024
+                itemStyle: { color: '#4ECDC4' },
+                lineStyle: { width: 2 }
+            },
+            {
+                name: '预测数据',
+                type: 'line',
+                data: allDeathsFixed,// 🚀 2025-2030
+                itemStyle: { color: '#FF6B6B' },
+                lineStyle: { type: 'dashed', width: 2, opacity: 0 },  // 初始时隐藏
+                symbol: 'triangle',
+                symbolSize: 10
+            },
+            {
+                name: '预测死亡人数',
+                type: 'line',
+                data: [...new Array(historyLength).fill(null), ...allLowerBounds.slice(historyLength)],
+                lineStyle: { opacity: 0 },
+                showSymbol: false,
+                stack: 'confidence',
+                areaStyle: { color: 'rgba(255, 107, 107, 0.2)', opacity: 0 }  // 初始时隐藏
+            },
+            {
+                name: '预测区间',
+                type: 'line',
+                data: [...new Array(historyLength).fill(null), ...allUpperBounds.slice(historyLength)],
+                lineStyle: { opacity: 0 },
+                showSymbol: false,
+                stack: 'confidence',
+                areaStyle: { color: 'rgba(255, 107, 107, 0.2)', opacity: 0 }  // 初始时隐藏
+            }
+        ]
+    };
+    chart.setOption(option);
+
+    // 监听 legendselectchanged 事件
+    chart.on('legendselectchanged', function (params) {
+        if (params.name === '预测数据') {
+            const isSelected = params.selected['预测数据'];
+            const series = option.series;
+            series[1].lineStyle.opacity = isSelected ? 1 : 0;  // 显示或隐藏预测数据
+            series[2].areaStyle.opacity = isSelected ? 0.2 : 0;  // 显示或隐藏预测区间
+            series[3].areaStyle.opacity = isSelected ? 0.2 : 0;  // 显示或隐藏预测区间
+            chart.setOption({ series: series });
+        }
+    });
+
+    window.addEventListener('resize', () => chart.resize());
+});
+
+    </script>
+</body>
+</html>

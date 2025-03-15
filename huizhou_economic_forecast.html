@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交通事故经济损失预测</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <style>
+        #forecast-chart {
+            width: 100%;
+            height: 600px;
+        }
+        .nav-link {
+            text-align: center;
+            margin: 20px;
+        }
+        a {
+            color: #4ECDC4;
+            text-decoration: none;
+            font-size: 16px;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>惠州市交通事故经济损失预测（2016-2030）</h2>
+    <div class="nav-link">
+        <a href="main_chart.html">👉 查看趋势分析</a>
+        <a href="pie_chart.html">👉 查看占比分析</a>
+        <a href="huizhou_forecast.html">👉 查看死亡人数预测</a>
+    </div>
+    <div id="forecast-chart"></div>
+
+    <script>
+        Promise.all([
+            fetch('http://127.0.0.1:8004/api/traffic-history').then(res => res.json()),
+            fetch('http://127.0.0.1:8004/api/traffic-forecast').then(res => res.json())
+        ]).then(([historyResponse, forecastResponse]) => {
+            // 提取历史数据和预测数据
+            const historyData = historyResponse.data;  // 历史数据
+            const forecastData = forecastResponse.forecast;  // 预测数据
+
+            // 过滤预测数据（确保只保留2025-2030）
+            const filteredForecastData = forecastData.filter(d => d.年份 >= 2025);
+
+            // 合并数据并排序
+            let allData = [...historyData, ...filteredForecastData];
+            allData.sort((a, b) => a.年份 - b.年份);
+
+            // 提取数据时明确字段名
+            const allYears = allData.map(d => d.年份);
+            const allEconomic = allData.map(d =>
+                d['全市损失折款'] !== undefined ? d['全市损失折款'] : d['预测损失折款'] // 根据字段名调整
+            );
+
+            const historyValues = historyData.map(d => d['全市损失折款']);
+            const forecastValues = filteredForecastData.map(d => d['预测损失折款']);
+
+            // 初始化图表
+            const chartElement = document.getElementById("forecast-chart");
+            const chart = echarts.init(chartElement);
+            console.log("🎯 ECharts 初始化成功！");
+
+            const option = {
+                tooltip: { trigger: 'axis' },
+                legend: {
+                    data: ['历史损失', '预测损失'],
+                    selected: {
+                        '预测损失': false  // 初始时隐藏预测损失
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    data: allYears,
+                    axisLabel: { rotate: 45 }
+                },
+                yAxis: { name: '经济损失（万元）' },
+                series: [
+                    {
+                        name: '历史损失',
+                        type: 'line',
+                        data: allEconomic.slice(0, historyData.length),
+                        itemStyle: { color: '#6C5B7B' },
+                        lineStyle: { width: 2 }
+                    },
+                    {
+                        name: '预测损失',
+                        type: 'line',
+                        data: allEconomic.slice(historyValues),  // 预测数据
+                        itemStyle: { color: '#E84A5F' },
+                        lineStyle: { type: 'dashed', width: 2, opacity: 0 },  // 初始时隐藏
+                        symbol: 'triangle',
+                        symbolSize: 10
+                    }
+                ]
+            };
+
+            chart.setOption(option);
+
+            // 监听 legendselectchanged 事件
+            chart.on('legendselectchanged', function (params) {
+                if (params.name === '预测损失') {
+                    const isSelected = params.selected['预测损失'];
+                    const series = option.series;
+                    series[1].lineStyle.opacity = isSelected ? 1 : 0;  // 显示或隐藏预测损失
+                    chart.setOption({ series: series });
+                }
+            });
+
+            window.addEventListener('resize', () => chart.resize());
+        }).catch(error => {
+            console.error("❌ 数据加载失败:", error);
+        });
+    </script>
+</body>
+</html>

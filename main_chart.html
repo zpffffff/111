@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>惠州市交通事故趋势分析</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <style>
+        #main-chart {
+            width: 100%;
+            height: 600px;
+        }
+        .nav-link {
+            text-align: center;
+            margin: 20px;
+        }
+        a {
+            color: #4ECDC4;
+            text-decoration: none;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h2>惠州市交通事故趋势分析（2016年后）</h2>
+    <div class="nav-link">
+        <a href="huizhou_forecast.html">👉 查看未来预测</a>
+        <a href="pie_chart.html">👉 查看各区县死亡人数占比</a>
+        <a href="huizhou_economic_forecast.html">👉 查看经济损失预测</a>
+    </div>
+    <div id="main-chart"></div>
+
+    <script>
+        fetch('data/huizhou_traffic_2016.json')
+            .then(response => response.json())
+            .then(data => {
+                let years = data.map(d => d.年份);
+                let loss_total = data.map(d => d['全市损失折款（万元）']);
+                let deaths_total = data.map(d => d.全市死亡人数);
+                let deaths_huicheng = data.map(d => d.惠城区死亡人数);
+                let deaths_huiyang = data.map(d => d.惠阳区死亡人数);
+                let deaths_longmen = data.map(d => d.龙门县死亡人数);
+                let deaths_huidong = data.map(d => d.惠东县死亡人数);
+                let deaths_boluo = data.map(d => d.博罗县死亡人数);
+                let deaths_dayawan = data.map(d => d.大亚湾区死亡人数);
+                let deaths_zhongkai = data.map(d => d.仲恺高新区死亡人数);
+
+                let chart = echarts.init(document.getElementById('main-chart'));
+                let option = {
+                    tooltip: { trigger: 'axis' },
+                    legend: { 
+                        data: ['全市经济损失', '全市死亡人数', '惠城区', '惠阳区', '龙门县', 
+                               '惠东县', '博罗县', '大亚湾区', '仲恺高新区'] 
+                    },
+                    xAxis: { 
+                        type: 'category', 
+                        data: years,
+                        axisLabel: { rotate: 45 }
+                    },
+                    yAxis: [
+                        { type: 'value', name: '损失折款（万元）' },
+                        { type: 'value', name: '死亡人数', position: 'right' }
+                    ],
+                    series: [
+                        { name: '全市经济损失', type: 'line', data: loss_total, itemStyle: { color: '#FF6B6B' } },
+                        { name: '全市死亡人数', type: 'bar', yAxisIndex: 1, data: deaths_total, itemStyle: { color: '#4ECDC4' } },
+                        { name: '惠城区', type: 'bar', yAxisIndex: 1, data: deaths_huicheng, stack: '区县死亡人数', itemStyle: { color: '#6C5B7B' } },
+                        { name: '惠阳区', type: 'bar', yAxisIndex: 1, data: deaths_huiyang, stack: '区县死亡人数', itemStyle: { color: '#355C7D' } },
+                        { name: '龙门县', type: 'bar', yAxisIndex: 1, data: deaths_longmen, stack: '区县死亡人数', itemStyle: { color: '#C06C84' } },
+                        { name: '惠东县', type: 'bar', yAxisIndex: 1, data: deaths_huidong, stack: '区县死亡人数', itemStyle: { color: '#F8B195' } },
+                        { name: '博罗县', type: 'bar', yAxisIndex: 1, data: deaths_boluo, stack: '区县死亡人数', itemStyle: { color: '#99B898' } },
+                        { name: '大亚湾区', type: 'bar', yAxisIndex: 1, data: deaths_dayawan, stack: '区县死亡人数', itemStyle: { color: '#2A363B' } },
+                        { name: '仲恺高新区', type: 'bar', yAxisIndex: 1, data: deaths_zhongkai, stack: '区县死亡人数', itemStyle: { color: '#E84A5F' } }
+                    ]
+                };
+                chart.setOption(option);
+                window.addEventListener('resize', () => chart.resize());
+            });
+    </script>
+</body>
+</html>
